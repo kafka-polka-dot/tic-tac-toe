@@ -1,25 +1,14 @@
-from flask import Flask
+from flask import Flask, render_template, request, jsonify
 app = Flask(__name__)
-
-template = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<table>
-    <tr><td>{}</td> <td>{}</td> <td>{}</td></tr>
-    <tr><td>{}</td> <td>{}</td> <td>{}</td></tr>
-    <tr><td>{}</td> <td>{}</td> <td>{}</td></tr>
-</table>
-</body>
-</html>
-"""
 
 
 @app.route('/')
-def main():
-    html_content = template.format((1, 2, 3, 4, 5, 6, 7, 8, 9))
-    return html_content
+def index_handler():
+    return render_template('index.html', cell=(1, "x", "QQQ", 4, 5, 6, 7, 8, 9))
+
+
+@app.route('/turn', methods=['POST'])
+def turn_handler():
+    x = request.form['x']
+    y = request.form['y']
+    return jsonify({'x': x, 'y': y})
