@@ -18,6 +18,8 @@
     </tr>
 </table>
 
+<button>reset</button>
+
 <script>
 $( "td" ).click(function() {
   var x = $( this ).attr( "x" );
@@ -25,6 +27,12 @@ $( "td" ).click(function() {
   $.post("/turn", { x: x, y: y }, function(result) {
     console.log(result);
     // $("span").html(result);
+  });
+});
+
+$( "button" ).click(function() {
+  $.post("/reset", {}, function(result) {
+    console.log(result);
   });
 });
 </script>
