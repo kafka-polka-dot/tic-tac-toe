@@ -1,38 +1,57 @@
 from copy import deepcopy
 
 from flask import Flask, render_template, request, jsonify
+import numpy
+
 app = Flask(__name__)
 
-# the state when the game is reset
-GAME_START_TABLE = [
-    [0, 0, 0],
-    [0, 0, 0],
-    [0, 0, 0]
-]
+X = 'X'
+O = 'O'
+N = 'N'
 
 # stores the current state of the game
 table = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8]
+    [N, N, N],
+    [N, N, N],
+    [N, N, N]
 ]
 
 
 @app.route('/')
 def index_handler():
-    return render_template('index.html', cell=(1, "x", "QQQ", 4, 5, 6, 7, 8, 9))
+    flat_table = tuple(''.join([''.join(e) for e in table]))
+    return render_template('index.html', cell=flat_table)
 
 
 @app.route('/turn', methods=['POST'])
 def turn_handler():
     x = int(request.form['x'])
     y = int(request.form['y'])
-    table[x][y] = -1
-    return jsonify({'x': x, 'y': y, 'table': str(table)})
+    table[y][x] = X
+
+    # check if somebody won
+    rotated = numpy.rot90(deepcopy(table))
+    check_list = [
+        table[0], table[1], table[2],                   # rows
+        rotated[0], rotated[1], rotated[2],             # columns
+        numpy.diagonal(table), numpy.diagonal(rotated)  # diagonals
+    ]
+
+    winner = None
+    for l in check_list:
+        if ''.join(l) == 'XXX':
+            winner = X
+        elif ''.join(l) == 'OOO':
+            winner = O
+
+    # FIXME: actual last turn
+    result = {'last_turn': X, 'winner': winner if winner else ''}
+    return jsonify(result)
 
 
 @app.route('/reset', methods=['POST'])
 def reset_handler():
-    global table
-    table = deepcopy(GAME_START_TABLE)
+    for row in table:
+        for i in range(len(row)):
+            row[i] = N
     return 'OK'
