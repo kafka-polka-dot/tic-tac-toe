@@ -1,7 +1,7 @@
 from copy import deepcopy
 
-from flask import Flask, render_template, request, jsonify, make_response
 import numpy
+from flask import Flask, render_template, request, jsonify, make_response
 
 app = Flask(__name__)
 
@@ -16,7 +16,24 @@ table = [
     [N, N, N]
 ]
 
+state = {}
+
 users = []
+
+"""
+TODO
+* [done] determine winner, assign cookies to players
+* [server] determine whose turn, return in the response
+* [client] display whose turn, based on the response
+    add an HTML element that would show the turn or the winner
+    update its text based on responses from POST to /turn or GET to /state
+* [server] allow to click only on your turn
+    = don't do anything if user id from the cookie is the same as last_turn, just return the state
+* [client] display when somebody won
+    update the HTML element based on responses from POST to /turn or GET to /state
+* [server] stop the game when somebody won = don't allow clicking
+    = don't do anything if a td is clicked if there is a winner
+"""
 
 
 def flatten_table():
@@ -27,7 +44,6 @@ def flatten_table():
 def index_handler():
     resp = make_response(render_template('index.html', cell=flatten_table()))
 
-    next_user_id = None
     if not users:
         next_user_id = X
     elif len(users) == 1:
@@ -45,7 +61,7 @@ def index_handler():
 @app.route('/turn', methods=['POST'])
 def turn_handler():
     user = request.cookies.get("user_id")
-
+    # sdelat' if na user id i na est  li pobeditel
     x = int(request.form['x'])
     y = int(request.form['y'])
     table[y][x] = user
@@ -53,8 +69,8 @@ def turn_handler():
     # check if somebody won
     rotated = numpy.rot90(deepcopy(table))
     check_list = [
-        table[0], table[1], table[2],                   # rows
-        rotated[0], rotated[1], rotated[2],             # columns
+        table[0], table[1], table[2],  # rows
+        rotated[0], rotated[1], rotated[2],  # columns
         numpy.diagonal(table), numpy.diagonal(rotated)  # diagonals
     ]
 
@@ -66,8 +82,13 @@ def turn_handler():
             winner = O
 
     # FIXME: actual last turn
-    result = {'last_turn': user, 'winner': winner if winner else ''}
-    return jsonify(result)
+    state.update({'x': x, 'y': y, 'last_turn': user, 'winner': winner if winner else ''})
+    return jsonify(state)
+
+
+@app.route('/state', methods=['GET'])
+def state_handler():
+    return jsonify(state)
 
 
 @app.route('/reset', methods=['POST'])
@@ -75,4 +96,6 @@ def reset_handler():
     for row in table:
         for i in range(len(row)):
             row[i] = N
+    global state
+    state = {}
     return 'OK'

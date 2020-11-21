@@ -29,6 +29,7 @@ $( "td" ).click(function() {
     var lastTurn = result.last_turn;
     var winner = result.winner
     // $("span").html(result);
+    // this is wrong if it's not my turn, it will write the other user's symbol into the cell that i clicked
     $("[x=" + x + "][y=" + y + "]").text(lastTurn);
   });
 });
@@ -37,6 +38,24 @@ $( "button" ).click(function() {
   $.post("/reset", {}, function(result) {
     console.log(result);
   });
+});
+
+function executeQuery() {
+  $.ajax({
+    url: '/state',
+    success: function(data) {
+      var x = data.x;
+      var y = data.y;
+      var lastTurn = data.last_turn;
+      $("[x=" + x + "][y=" + y + "]").text(lastTurn);
+    }
+  });
+  setTimeout(executeQuery, 1000); // you could choose not to continue on failure...
+}
+
+$(document).ready(function() {
+  // run the first time; all subsequent calls will take care of themselves
+  setTimeout(executeQuery, 1000);
 });
 </script>
 
