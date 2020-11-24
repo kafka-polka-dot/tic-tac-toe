@@ -17,7 +17,7 @@
         <td x="0" y="2">{{ cell.6 }}</td> <td x="1" y="2">{{ cell.7 }}</td> <td x="2" y="2">{{ cell.8 }}</td>
     </tr>
 </table>
-
+<div class="next-turn"></div>
 <button>reset</button>
 
 <script>
@@ -27,8 +27,9 @@ $( "td" ).click(function() {
   $.post("/turn", { x: x, y: y }, function(result) {
     console.log(result);
     var lastTurn = result.last_turn;
-    var winner = result.winner
-    // $("span").html(result);
+    var nextTurn = result.next_turn;
+    var winner = result.winner;
+    $(".next-turn").text(nextTurn);
     // this is wrong if it's not my turn, it will write the other user's symbol into the cell that i clicked
     $("[x=" + x + "][y=" + y + "]").text(lastTurn);
   });
@@ -48,6 +49,8 @@ function executeQuery() {
       var y = data.y;
       var lastTurn = data.last_turn;
       $("[x=" + x + "][y=" + y + "]").text(lastTurn);
+      var nextTurn = data.next_turn;
+      $(".next-turn").text(nextTurn);
     }
   });
   setTimeout(executeQuery, 1000); // you could choose not to continue on failure...

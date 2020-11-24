@@ -23,10 +23,11 @@ users = []
 """
 TODO
 * [done] determine winner, assign cookies to players
-* [server] determine whose turn, return in the response
-* [client] display whose turn, based on the response
+* [done] determine whose turn, return in the response
+* [done] display whose turn, based on the response
     add an HTML element that would show the turn or the winner
     update its text based on responses from POST to /turn or GET to /state
+* [server] do nothing if the clicked cell is not empty
 * [server] allow to click only on your turn
     = don't do anything if user id from the cookie is the same as last_turn, just return the state
 * [client] display when somebody won
@@ -41,18 +42,27 @@ def flatten_table():
 
 
 @app.route('/')
+# defines a route to call a Python function from web-browser to render a table
 def index_handler():
     resp = make_response(render_template('index.html', cell=flatten_table()))
-
+    # game starts with X, than 0 for the next user
+    next_user_id = None
     if not users:
         next_user_id = X
     elif len(users) == 1:
         next_user_id = O
-    else:
-        next_user_id = None
 
-    cookies = request.cookies.get('user_id')
-    if not cookies and next_user_id:
+    if len(users) > 1:
+        can_accept_new_users = False
+    else:
+        can_accept_new_users = True
+
+    # check if the requesting browser knows which player it is
+    cookie = request.cookies.get('user_id')
+    # 'not cookie' means that it's a first request from that browser => should send it the user id
+    is_request_coming_from_new_browser = cookie is None
+
+    if is_request_coming_from_new_browser and can_accept_new_users:  # request where browser didn't send cookies
         resp.set_cookie('user_id', next_user_id)
         users.append(next_user_id)
     return resp
@@ -67,6 +77,10 @@ def turn_handler():
     table[y][x] = user
 
     # check if somebody won
+    # FIXME: rotated = zip(*original[::-1])
+    # diagonals:
+    # [m[i][i] for i in xrange(0, len(m))]
+    # [m[i][~i] for i in xrange(0, len(m))]
     rotated = numpy.rot90(deepcopy(table))
     check_list = [
         table[0], table[1], table[2],  # rows
@@ -81,8 +95,8 @@ def turn_handler():
         elif ''.join(list_item) == 'OOO':
             winner = O
 
-    # FIXME: actual last turn
-    state.update({'x': x, 'y': y, 'last_turn': user, 'winner': winner if winner else ''})
+    state.update(
+        {'x': x, 'y': y, 'last_turn': user, 'next_turn': O if user == X else X, 'winner': winner if winner else ''})
     return jsonify(state)
 
 
