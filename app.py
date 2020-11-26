@@ -27,12 +27,12 @@ TODO
 * [done] display whose turn, based on the response
     add an HTML element that would show the turn or the winner
     update its text based on responses from POST to /turn or GET to /state
-* [server] do nothing if the clicked cell is not empty
-* [server] allow to click only on your turn
+* [done] do nothing if the clicked cell is not empty
+* [done] allow to click only on your turn
     = don't do anything if user id from the cookie is the same as last_turn, just return the state
-* [client] display when somebody won
+* [done] display when somebody won
     update the HTML element based on responses from POST to /turn or GET to /state
-* [server] stop the game when somebody won = don't allow clicking
+* [done] stop the game when somebody won = don't allow clicking
     = don't do anything if a td is clicked if there is a winner
 """
 
@@ -70,33 +70,37 @@ def index_handler():
 
 @app.route('/turn', methods=['POST'])
 def turn_handler():
+    """
+    this function processes the turn
+
+    """
+    #request contains coordinates of the clicked cell
     user = request.cookies.get("user_id")
-    # sdelat' if na user id i na est  li pobeditel
     x = int(request.form['x'])
     y = int(request.form['y'])
-    table[y][x] = user
+    if table[y][x] == 'N' and state.get('last_turn') != user and not state.get('winner'):
+        table[y][x] = user
+        # check if somebody won
+        # FIXME: rotated = zip(*original[::-1])
+        # diagonals:
+        # [m[i][i] for i in xrange(0, len(m))]
+        # [m[i][~i] for i in xrange(0, len(m))]
+        rotated = numpy.rot90(deepcopy(table))
+        check_list = [
+            table[0], table[1], table[2],  # rows
+            rotated[0], rotated[1], rotated[2],  # columns
+            numpy.diagonal(table), numpy.diagonal(rotated)  # diagonals
+        ]
 
-    # check if somebody won
-    # FIXME: rotated = zip(*original[::-1])
-    # diagonals:
-    # [m[i][i] for i in xrange(0, len(m))]
-    # [m[i][~i] for i in xrange(0, len(m))]
-    rotated = numpy.rot90(deepcopy(table))
-    check_list = [
-        table[0], table[1], table[2],  # rows
-        rotated[0], rotated[1], rotated[2],  # columns
-        numpy.diagonal(table), numpy.diagonal(rotated)  # diagonals
-    ]
+        winner = None
+        for list_item in check_list:
+            if ''.join(list_item) == 'XXX':
+                winner = X
+            elif ''.join(list_item) == 'OOO':
+                winner = O
 
-    winner = None
-    for list_item in check_list:
-        if ''.join(list_item) == 'XXX':
-            winner = X
-        elif ''.join(list_item) == 'OOO':
-            winner = O
-
-    state.update(
-        {'x': x, 'y': y, 'last_turn': user, 'next_turn': O if user == X else X, 'winner': winner if winner else ''})
+        state.update(
+            {'x': x, 'y': y, 'last_turn': user, 'next_turn': O if user == X else X, 'winner': winner if winner else ''})
     return jsonify(state)
 
 

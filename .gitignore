@@ -2,3 +2,5 @@
 .idea
 __pycache__
 .vscode/
+local3.9/
+.python-version

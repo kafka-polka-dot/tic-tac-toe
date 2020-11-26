@@ -17,7 +17,7 @@
         <td x="0" y="2">{{ cell.6 }}</td> <td x="1" y="2">{{ cell.7 }}</td> <td x="2" y="2">{{ cell.8 }}</td>
     </tr>
 </table>
-<div class="next-turn"></div>
+<div class="info"></div>
 <button>reset</button>
 
 <script>
@@ -29,9 +29,12 @@ $( "td" ).click(function() {
     var lastTurn = result.last_turn;
     var nextTurn = result.next_turn;
     var winner = result.winner;
-    $(".next-turn").text(nextTurn);
-    // this is wrong if it's not my turn, it will write the other user's symbol into the cell that i clicked
-    $("[x=" + x + "][y=" + y + "]").text(lastTurn);
+    if (winner) {
+      $(".info").text("Winner: " + winner);
+    } else if (nextTurn) {
+      $(".info").text("Next turn: " + nextTurn);
+    }
+    $("[x=" + result.x + "][y=" + result.y + "]").text(lastTurn);
   });
 });
 
@@ -44,13 +47,18 @@ $( "button" ).click(function() {
 function executeQuery() {
   $.ajax({
     url: '/state',
-    success: function(data) {
-      var x = data.x;
-      var y = data.y;
-      var lastTurn = data.last_turn;
+    success: function(result) {
+      var x = result.x;
+      var y = result.y;
+      var lastTurn = result.last_turn;
       $("[x=" + x + "][y=" + y + "]").text(lastTurn);
-      var nextTurn = data.next_turn;
-      $(".next-turn").text(nextTurn);
+      var winner = result.winner;
+      var nextTurn = result.next_turn;
+      if (winner) {
+        $(".info").text("Winner: " + winner);
+      } else if (nextTurn) {
+        $(".info").text("Next turn: " + nextTurn);
+      }
     }
   });
   setTimeout(executeQuery, 1000); // you could choose not to continue on failure...
