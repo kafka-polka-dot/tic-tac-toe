@@ -34,6 +34,21 @@ TODO
     update the HTML element based on responses from POST to /turn or GET to /state
 * [done] stop the game when somebody won = don't allow clicking
     = don't do anything if a td is clicked if there is a winner
+* [testing] unit tests and CI
+* [bug] race condition during state change:
+    * X clicks a cell -> x, y, last_turn are updated with X's turn
+    * X does a /state call
+    * O clicks a cell during their turn -> x, y, last_turn are updated with O's turn
+    * before the next /state call, X clicks a cell, even though it's not their turn according to what client shows,
+      but the server processes it, because O has made their turn
+             -> x, y, last_turn are updated with X's turn
+    * X's /turn POST returns x, y and last_turn of their turn,
+      but X's browser has never received the data about O's turn
+* [bug] both browsers have a cookie with the same user_id
+* [client] draw empty fields instead of N
+* [client] show which player I am
+* [server] determine (randomly?) who starts the game
+* [client] make it look nicer
 """
 
 
