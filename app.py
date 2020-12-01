@@ -45,10 +45,11 @@ TODO
     * X's /turn POST returns x, y and last_turn of their turn,
       but X's browser has never received the data about O's turn
 * [bug] both browsers have a cookie with the same user_id
-* [client] draw empty fields instead of N
+* [server] draw empty fields instead of N
 * [client] show which player I am
-* [server] determine (randomly?) who starts the game
-* [client] make it look nicer
+* [server] determine (randomly?) who starts the game --- x starts the game
+* [server] render template in index_handler with next_turn
+* [done] make it look nicer
 """
 
 
@@ -89,7 +90,7 @@ def turn_handler():
     this function processes the turn
 
     """
-    #request contains coordinates of the clicked cell
+    # request contains coordinates of the clicked cell
     user = request.cookies.get("user_id")
     x = int(request.form['x'])
     y = int(request.form['y'])
