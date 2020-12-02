@@ -96,28 +96,34 @@ def turn_handler():
     y = int(request.form['y'])
     if table[y][x] == N and state.get('last_turn') != user and not state.get('winner'):
         table[y][x] = user
-        # check if somebody won
-        # FIXME: rotated = zip(*original[::-1])
-        # diagonals:
-        # [m[i][i] for i in xrange(0, len(m))]
-        # [m[i][~i] for i in xrange(0, len(m))]
-        rotated = numpy.rot90(deepcopy(table))
-        check_list = [
-            table[0], table[1], table[2],  # rows
-            rotated[0], rotated[1], rotated[2],  # columns
-            numpy.diagonal(table), numpy.diagonal(rotated)  # diagonals
-        ]
-
-        winner = None
-        for list_item in check_list:
-            if ''.join(list_item) == 'XXX':
-                winner = X
-            elif ''.join(list_item) == 'OOO':
-                winner = O
-
+        winner = determine_winner(table)
         state.update(
             {'x': x, 'y': y, 'last_turn': user, 'next_turn': O if user == X else X, 'winner': winner if winner else ''})
     return jsonify(state)
+
+
+def determine_winner(table_: list) -> str:
+    """
+    check if somebody won
+    :return: X or O or None
+    """
+    # FIXME: rotated = zip(*original[::-1])
+    # diagonals:
+    # [m[i][i] for i in xrange(0, len(m))]
+    # [m[i][~i] for i in xrange(0, len(m))]
+    rotated = numpy.rot90(deepcopy(table_))
+    check_list = [
+        table_[0], table_[1], table_[2],  # rows
+        rotated[0], rotated[1], rotated[2],  # columns
+        numpy.diagonal(table_), numpy.diagonal(rotated)  # diagonals
+    ]
+    winner = None
+    for list_item in check_list:
+        if ''.join(list_item) == 'XXX':
+            winner = X
+        elif ''.join(list_item) == 'OOO':
+            winner = O
+    return winner
 
 
 @app.route('/state', methods=['GET'])
