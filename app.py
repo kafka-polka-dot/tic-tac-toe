@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 X = 'X'
 O = 'O'
-N = 'N'
+N = ' '
 
 # stores the current state of the game
 table = [
@@ -45,22 +45,22 @@ TODO
     * X's /turn POST returns x, y and last_turn of their turn,
       but X's browser has never received the data about O's turn
 * [bug] both browsers have a cookie with the same user_id
-* [server] draw empty fields instead of N
+* [done] draw empty fields instead of N
 * [client] show which player I am
-* [server] determine (randomly?) who starts the game --- x starts the game
-* [server] render template in index_handler with next_turn
+* [done] determine (randomly?) who starts the game --- x starts the game
+* [done] render template in index_handler with next_turn
 * [done] make it look nicer
 """
 
 
-def flatten_table():
-    return tuple(''.join([''.join(e) for e in table]))
+def flatten_table(table_: list) -> tuple:
+    return tuple(''.join([''.join(e) for e in table_]))
 
 
 @app.route('/')
 # defines a route to call a Python function from web-browser to render a table
 def index_handler():
-    resp = make_response(render_template('index.html', cell=flatten_table()))
+    resp = make_response(render_template('index.html', cell=flatten_table(table), turn=state.get('next_turn', X)))
     # game starts with X, than 0 for the next user
     next_user_id = None
     if not users:
@@ -94,7 +94,7 @@ def turn_handler():
     user = request.cookies.get("user_id")
     x = int(request.form['x'])
     y = int(request.form['y'])
-    if table[y][x] == 'N' and state.get('last_turn') != user and not state.get('winner'):
+    if table[y][x] == N and state.get('last_turn') != user and not state.get('winner'):
         table[y][x] = user
         # check if somebody won
         # FIXME: rotated = zip(*original[::-1])

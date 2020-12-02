@@ -32,7 +32,7 @@ body {
   justify-content: center;
   font-size: 3rem;
   font-weight: bold;
-  border: 3px solid black;
+  border: 3px solid #008080;
   transition: background 0.2s ease-in-out;
   color: #B22222;
 }
@@ -64,7 +64,7 @@ button {
     <div id="22" class="block">{{ cell.8 }}</div>
   </div>
 </table>
-<div class="info">Current turn: </div>
+<div class="info">Current turn: {{ turn }}</div>
 <button>reset</button>
 
 <script>
