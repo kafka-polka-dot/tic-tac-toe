@@ -4,33 +4,86 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+ <style>
+h1 {
+  font-size: 30px;
+  color: #B22222;
+  text-transform: uppercase;
+  font-weight: 300;
+  text-align: center;
+  margin-bottom: 15px;
+}
+body {
+ background-color: 	#ffcccc;
+ text-align: center;
+}
+.play-area {
+  display: grid;
+  width: 300px;
+  height: 300px;
+  grid-template-columns: auto auto auto;
+  margin: 0 auto;
+}
+.block {
+  display: flex;
+  width: 100px;
+  height: 100px;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: bold;
+  border: 3px solid #008080;
+  transition: background 0.2s ease-in-out;
+  color: #B22222;
+}
+button {
+    font-size: 20px;
+    text-transform: uppercase;
+    padding: 14px 40px;
+    background-color: #00c7c7;
+    color: #8b0000;
+    border: solid 1px #008080;
+}
+.info {
+    margin: 2%;
+    color: #8b0000;
+    font-size: 20px;
+}
+ </style>
 </head>
 <body>
+<h1>tick-tac-toe</h1>
 <table>
-    <tr>
-        <td x="0" y="0">{{ cell.0 }}</td> <td x="1" y="0">{{ cell.1 }}</td> <td x="2" y="0">{{ cell.2 }}</td>
-    </tr>
-    <tr>
-        <td x="0" y="1">{{ cell.3 }}</td> <td x="1" y="1">{{ cell.4 }}</td> <td x="2" y="1">{{ cell.5 }}</td>
-    </tr>
-    <tr>
-        <td x="0" y="2">{{ cell.6 }}</td> <td x="1" y="2">{{ cell.7 }}</td> <td x="2" y="2">{{ cell.8 }}</td>
-    </tr>
+  <div class="play-area">
+    <div id="00" class="block">{{ cell.0 }}</div>
+    <div id="10" class="block">{{ cell.1 }}</div>
+    <div id="20" class="block">{{ cell.2 }}</div>
+    <div id="01" class="block">{{ cell.3 }}</div>
+    <div id="11" class="block">{{ cell.4 }}</div>
+    <div id="21" class="block">{{ cell.5 }}</div>
+    <div id="02" class="block">{{ cell.6 }}</div>
+    <div id="12" class="block">{{ cell.7 }}</div>
+    <div id="22" class="block">{{ cell.8 }}</div>
+  </div>
 </table>
-
+<div class="info">Current turn: {{ turn }}</div>
 <button>reset</button>
 
 <script>
-$( "td" ).click(function() {
-  var x = $( this ).attr( "x" );
-  var y = $( this ).attr( "y" );
+$( ".block" ).click(function() {
+  var x = $( this ).attr( "id" )[0];
+  var y = $( this ).attr( "id" )[1];
   $.post("/turn", { x: x, y: y }, function(result) {
     console.log(result);
     var lastTurn = result.last_turn;
-    var winner = result.winner
-    // $("span").html(result);
-    // this is wrong if it's not my turn, it will write the other user's symbol into the cell that i clicked
-    $("[x=" + x + "][y=" + y + "]").text(lastTurn);
+    var nextTurn = result.next_turn;
+    var winner = result.winner;
+    if (winner) {
+      $(".info").text("Winner: " + winner);
+    } else if (nextTurn) {
+      $(".info").text("Current turn: " + nextTurn);
+    }
+    $("#" + result.x + result.y).text(lastTurn);
   });
 });
 
@@ -43,11 +96,18 @@ $( "button" ).click(function() {
 function executeQuery() {
   $.ajax({
     url: '/state',
-    success: function(data) {
-      var x = data.x;
-      var y = data.y;
-      var lastTurn = data.last_turn;
-      $("[x=" + x + "][y=" + y + "]").text(lastTurn);
+    success: function(result) {
+      var x = result.x;
+      var y = result.y;
+      var lastTurn = result.last_turn;
+      $("#" + result.x + result.y).text(lastTurn);
+      var winner = result.winner;
+      var nextTurn = result.next_turn;
+      if (winner) {
+        $(".info").text("Winner: " + winner);
+      } else if (nextTurn) {
+        $(".info").text("Current turn: " + nextTurn);
+      }
     }
   });
   setTimeout(executeQuery, 1000); // you could choose not to continue on failure...
