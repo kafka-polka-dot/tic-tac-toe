@@ -1,3 +1,4 @@
+import uuid
 from copy import deepcopy
 
 import numpy
@@ -16,12 +17,26 @@ table = [
     [N, N, N]
 ]
 
-state = {}
+# init state with last turn to prevent O from making 1st turn
+state = {'last_turn': O}
 
 users = []
 
+session_id = str(uuid.uuid4())
+
 """
 TODO
+* [client] show which player I am
+* [bug] race condition during state change:
+    * X clicks a cell -> x, y, last_turn are updated with X's turn
+    * X does a /state call
+    * O clicks a cell during their turn -> x, y, last_turn are updated with O's turn
+    * before the next /state call, X clicks a cell, even though it's not their turn according to what client shows,
+      but the server processes it, because O has made their turn
+             -> x, y, last_turn are updated with X's turn
+    * X's /turn POST returns x, y and last_turn of their turn,
+      but X's browser has never received the data about O's turn
+DONE
 * [done] determine winner, assign cookies to players
 * [done] determine whose turn, return in the response
 * [done] display whose turn, based on the response
@@ -34,22 +49,13 @@ TODO
     update the HTML element based on responses from POST to /turn or GET to /state
 * [done] stop the game when somebody won = don't allow clicking
     = don't do anything if a td is clicked if there is a winner
-* [testing] unit tests and CI
-* [bug] race condition during state change:
-    * X clicks a cell -> x, y, last_turn are updated with X's turn
-    * X does a /state call
-    * O clicks a cell during their turn -> x, y, last_turn are updated with O's turn
-    * before the next /state call, X clicks a cell, even though it's not their turn according to what client shows,
-      but the server processes it, because O has made their turn
-             -> x, y, last_turn are updated with X's turn
-    * X's /turn POST returns x, y and last_turn of their turn,
-      but X's browser has never received the data about O's turn
-* [bug] both browsers have a cookie with the same user_id
+* [done] unit tests and CI
 * [done] draw empty fields instead of N
-* [client] show which player I am
 * [done] determine (randomly?) who starts the game --- x starts the game
 * [done] render template in index_handler with next_turn
 * [done] make it look nicer
+* [done] on the O's browser, click 'reset', then click a cell
+* [done] both browsers have a cookie with the same user_id
 """
 
 
@@ -74,12 +80,15 @@ def index_handler():
         can_accept_new_users = True
 
     # check if the requesting browser knows which player it is
-    cookie = request.cookies.get('user_id')
+    user_id_cookie = request.cookies.get('user_id')
+    # needed to check if the browser has the cookie of the current session
+    session_id_cookie = request.cookies.get('session_id')
     # 'not cookie' means that it's a first request from that browser => should send it the user id
-    is_request_coming_from_new_browser = cookie is None
+    is_request_coming_from_new_browser = user_id_cookie is None or session_id_cookie != session_id
 
-    if is_request_coming_from_new_browser and can_accept_new_users:  # request where browser didn't send cookies
+    if is_request_coming_from_new_browser and can_accept_new_users:
         resp.set_cookie('user_id', next_user_id)
+        resp.set_cookie('session_id', session_id)
         users.append(next_user_id)
     return resp
 
@@ -137,5 +146,6 @@ def reset_handler():
         for i in range(len(row)):
             row[i] = N
     global state
-    state = {}
+    # init state with last turn to prevent O from making 1st turn
+    state = {'last_turn': O}
     return 'OK'
